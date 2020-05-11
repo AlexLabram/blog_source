@@ -1,6 +1,6 @@
 baseurl = "/"
 languageCode = "en-us"
-title = "A Hugo website"
+title = "Intricate Mechanisms"
 theme = "hugo-lithium"
 googleAnalytics = ""
 disqusShortname = ""
@@ -11,17 +11,24 @@ publishDir = "../AlexLabram.github.io"
     post = "/:year/:month/:day/:slug/"
 
 [[menu.main]]
+    name = "Posts"
+    url = "/"
+    weight = 1
+[[menu.main]]
     name = "About"
     url = "/about/"
+    weight = 2
 [[menu.main]]
     name = "GitHub"
     url = "https://github.com/rstudio/blogdown"
+    weight = 3
 [[menu.main]]
-    name = "Twitter"
-    url = "https://twitter.com/rstudio"
+    name = "LinkedIn"
+    url = "https://www.linkedin.com/in/alexlabram/"
+    weight = 4
 
 [params]
-    description = "A website built through Hugo and blogdown."
+    description = "A study of complexity."
 
     # options for highlight.js (version, additional languages, and theme)
     highlightjsVersion = "9.12.0"

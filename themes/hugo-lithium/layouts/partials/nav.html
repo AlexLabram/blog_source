@@ -5,7 +5,11 @@
          height="{{ .Site.Params.logo.height }}"
          alt="{{ .Site.Params.logo.alt }}">
   </a>
-
+  
+  <div style="display: inline; font-size: 27px;">INTRICATE MECHANISMS</div>
+  <!-- Size chosen to match menu width.  Text and styles both inserted here to minimise the number of files changed. -->
+  <!-- I was originally trying to center the text between the logo and the menu, but this looks pretty good to me! -->
+  
   <ul class="nav-links">
     {{ range .Site.Menus.main }}
     <li><a href="{{ .URL }}">{{ .Name }}</a></li>

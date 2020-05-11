@@ -248,11 +248,11 @@ code {
 
 @media (min-width: 600px) {
   .header {
-    padding: 25px 0;
+    padding: 10px 0;
   }
 
   .nav-logo {
-    margin-top: -13px;
+    margin-top: 2px;
   }
 
   .nav-logo img {
