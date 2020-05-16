@@ -1,0 +1,109 @@
+---
+title: Tables in R Markdown
+author: Alex Labram
+date: '2020-05-16'
+slug: tables-in-r-markdown
+categories:
+  - R
+tags:
+  - rant
+  - R Markdown
+---
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+reqd_pkgs <- c("knitr", # required for R Notebooks to function - if the notebook fails to compile, try running this code chunk in isolation
+               "tidyverse", # general language augmentation
+               "flextable") # more attractive/readable tables
+               #"kableExtra") # more attractive/readable tables
+for (pkg in reqd_pkgs[!(reqd_pkgs %in% installed.packages())])  install.packages(pkg)
+for (pkg in reqd_pkgs[!(reqd_pkgs %in% (.packages()))])         library(pkg, character.only = TRUE)
+```
+
+Something that took me a while to grasp when I was younger is that two people can have legitimately different experiences of a person or place.  "He's always positive and smiling," says the big boss.  "He's really grumpy and tends to lash out," says the subordinate.  "He's cheerful and a bit flirty," says the co-worker.  The executive assistant agrees but adds that she finds the flirting a bit creepy.  All inconsistent; each valid.
+
+R is very much a language of two experiences.  If you're following a well-beaten track - analysing data in a way that the R developers expected you to - it's very clean and elegant.  There's the occasional niggle, but by and large it quickly and efficiently gets you where you wanted to go.
+
+Once you go off-piste, however, it's a different story.  Nothing behaves as you expect it to.  The documentation is poor or nonexistent.  Error messages are incomprehensible and/or apparently unrelated to the code you just wrote.  You quickly find yourself lost in a labyrinth of obscure options, package dependencies, and "fixes" that break other stuff.
+
+I've just hit yet another example of this.  I'm currently running through the Johns Hopkins University [Data Science specialisation](https://www.coursera.org/specializations/jhu-data-science) on Coursera (it's the most complete set of data science courseware I've found that uses R).  Having reached the module on [literate programming](https://en.wikipedia.org/wiki/Literate_programming) - i.e. R Notebooks - I find myself wanting to produce attractive, readable tables.
+
+This would also be useful in my day job, where I'm currently using R Notebooks to perform and document an audit for a credit institution.  In that context I need to render my R Markdown documents to Word.
+
+## So many options... all of them wrong
+
+By default, if a notebook chunk outputs a table, this is rendered as:
+```{r}
+data.frame(a=c("x","y","z"), b=c(1,5,3.14159))
+```
+
+This is, to be blunt, ugly as sin.  Fortunately, the `knitr` package (used by RStudio to build documents from R Markdown code) has a helpful function `kable` to produce a knitr-friendly table.
+
+```{r}
+data.frame(a=c("x","y","z"), b=c(1,5,3.14159)) %>% knitr::kable()
+```
+
+*Less* fortunately, this helpful function has its own problems: in particular, it usually sizes all tables to the width of the window rather than to the data[^1].  For little two-column summary tables like the one above, this quickly starts to become a serious readability issue: your text and your numbers are so far apart that it's easy to confuse two rows.
+
+here doesn't seem to be any built-in way of fixing this, since `kable` is intended to be a quick-and-dirty practical tool rather than a full-fat solution.
+
+But wait, there are more options!  The `flextable` package, a massively configurable replacement for `knitr::kable`, offers far more granular handling of table data.  By default, it produces output something like:
+
+```{r}
+data.frame(a=c("x","y","z"), b=c(1,5,3.14159)) %>% flextable()
+```
+
+...which is also practically unreadable due to the tiny default font size.  Why is it changing the font?  I didn't ask it to change the font!
+
+I've done the best part of an hour's digging on this, and it appears that `flextable` will *always* override the notebook's font settings; it isn't possible to have it take the same font size and family used in the rest of the text, except by explicitly setting those parameters.  This immediately creates a major maintenance burden: I need to know up-front every way in which this notebook could be used[^2], think through the appropriate font handling, and bake all of that into the code.
+
+Thanks but no thanks.  Is there anything that's closer to the behaviour of `kable`?
+
+Turns out there is.  It's called `kableExtra`, and it's designed to let you build complex tables for HTML or LaTeX.  Significantly, it has an autosize option!
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Need to load this separately as it overrides the default knitr::kable behaviour when loaded.
+reqd_pkgs <- c("kableExtra") # more attractive/readable tables
+for (pkg in reqd_pkgs[!(reqd_pkgs %in% installed.packages())])  install.packages(pkg)
+for (pkg in reqd_pkgs[!(reqd_pkgs %in% (.packages()))])         library(pkg, character.only = TRUE)
+```
+
+The result looks like:
+
+```{r}
+data.frame(a=c("x","y","z"), b=c(1,5,3.14159)) %>% knitr::kable() %>% kableExtra::kable_styling(full_width=FALSE)
+```
+
+Unfortunately, this has its own problems.  Firstly, when I run this code in RStudio, I don't get a table; I get a chunk of HTML.  That's kinda unhelpful.
+
+![Table being mis-displayed as raw HTML](/post/2020-05-16-tables-in-r-markdown_files/table_html.jpg)\
+
+Secondly, `kableExtra` is massively intrusive: it overrides the default `knitr` function behaviour to the point that formerly-valid code suddenly stops working.
+
+In particular, code of the form `df %>% knitr::kable` will fall over with an unhelpful error message.  I eventually realised that R was now expecting it to read `df %>% knitr::kable()`.  Because why?  Because f*** you, [that's why](https://knowyourmeme.com/memes/why-because-fuck-you-that-s-why).
+
+After some digging through the `kableExtra` [bug-tracker](https://github.com/haozhu233/kableExtra/issues/265), it appears that another hidden effect of this package is to change `knitr`'s default output to HTML.  This is a more significant issue because - after yet *more* digging - I *finally* realised that `kable` is only intended for HTML and LaTeX output.  Attempting to use it with Word output first produces an error and then, once you've applied a workaround, leaves you with completely unformatted output.
+
+![Word file with unformatted text instead of a table](/post/2020-05-16-tables-in-r-markdown_files/table_word.jpg)\
+
+Not much use...
+
+## We try things; sometimes they work
+
+So here's where I find myself:
+
+1. I can produce functional tables with `knitr::kable`, but they have poor readability.
+1. I can produce tables with `flextable`, but they either have poor readability or are high-maintenance.
+1. I can produce attractive tables with `kableExtra`, but they can't be used in Word and they screw up my system.
+1. I've wasted a lot of time to arrive at this conclusion.
+
+That last point is honestly the most annoying.  If I were told up-front "no, you can't do that in R", I'd be... well, a little irritated, but nothing I couldn't walk off.
+
+Conversely, after several hours of reading "sure you can do that, just try XYZ" - only to find out that my *specific* set of requirements falls squarely into the gaps between the available options - I'm fit to be tied.  And this experience is ubiquitous when using R: every time you take one foot off the beaten track, you risk losing it to a bear-trap.
+
+Fundamentally this is a consequence of R's very decentralised development philosophy: anyone can decide they're unhappy with the current state of affairs and develop their own package, [with blackjack and hookers](https://knowyourmeme.com/memes/im-going-to-build-my-own-theme-park-with-blackjack-and-hookers).  That sometimes leads to very good results (e.g. the tidyverse), but it means there isn't a "right" way of doing things that the community as a whole takes responsibility for.  Non-obvious use cases tend to fall through the cracks, with different packages' developers all viewing them as someone else's problem to solve.
+
+So ultimately you just have to suck it up.  ~Or~ ~switch~ ~to~ ~Python.~
+
+[^1]: Interestingly, it appears this is *not* the case in Blogdown, where `knitr::kable` sizes tables to the width of the data.  I discovered this factoid only after I had finished writing the post and published a first draft to GitHub Pages, and still have no idea why there's a difference.
+
+[^2]: To produce HTML, Word or PDF output; in a Blogdown post or Bookdown volume; as a child of another notebook; as an interactive educational tool; etc etc etc.  Some of these will have the same font settings... but which?  In particular, I'm not sure if font settings selected for HTML will display correctly in an MS Word document, or if this will cause the wheels to fall off.

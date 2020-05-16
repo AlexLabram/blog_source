@@ -1,0 +1,132 @@
+---
+title: Tables in R Markdown
+author: Alex Labram
+date: '2020-05-16'
+slug: tables-in-r-markdown
+categories:
+  - R
+tags:
+  - rant
+  - R Markdown
+---
+
+<link href="/rmarkdown-libs/tabwid/tabwid.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/tabwid/tabwid.js"></script>
+<script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
+
+
+<p>Something that took me a while to grasp when I was younger is that two people can have legitimately different experiences of a person or place. “He’s always positive and smiling,” says the big boss. “He’s really grumpy and tends to lash out,” says the subordinate. “He’s cheerful and a bit flirty,” says the co-worker. The executive assistant agrees but adds that she finds the flirting a bit creepy. All inconsistent; each valid.</p>
+<p>R is very much a language of two experiences. If you’re following a well-beaten track - analysing data in a way that the R developers expected you to - it’s very clean and elegant. There’s the occasional niggle, but by and large it quickly and efficiently gets you where you wanted to go.</p>
+<p>Once you go off-piste, however, it’s a different story. Nothing behaves as you expect it to. The documentation is poor or nonexistent. Error messages are incomprehensible and/or apparently unrelated to the code you just wrote. You quickly find yourself lost in a labyrinth of obscure options, package dependencies, and “fixes” that break other stuff.</p>
+<p>I’ve just hit yet another example of this. I’m currently running through the Johns Hopkins University <a href="https://www.coursera.org/specializations/jhu-data-science">Data Science specialisation</a> on Coursera (it’s the most complete set of data science courseware I’ve found that uses R). Having reached the module on <a href="https://en.wikipedia.org/wiki/Literate_programming">literate programming</a> - i.e. R Notebooks - I find myself wanting to produce attractive, readable tables.</p>
+<p>This would also be useful in my day job, where I’m currently using R Notebooks to perform and document an audit for a credit institution. In that context I need to render my R Markdown documents to Word.</p>
+<div id="so-many-options-all-of-them-wrong" class="section level2">
+<h2>So many options… all of them wrong</h2>
+<p>By default, if a notebook chunk outputs a table, this is rendered as:</p>
+<pre class="r"><code>data.frame(a=c(&quot;x&quot;,&quot;y&quot;,&quot;z&quot;), b=c(1,5,3.14159))</code></pre>
+<pre><code>##   a       b
+## 1 x 1.00000
+## 2 y 5.00000
+## 3 z 3.14159</code></pre>
+<p>This is, to be blunt, ugly as sin. Fortunately, the <code>knitr</code> package (used by RStudio to build documents from R Markdown code) has a helpful function <code>kable</code> to produce a knitr-friendly table.</p>
+<pre class="r"><code>data.frame(a=c(&quot;x&quot;,&quot;y&quot;,&quot;z&quot;), b=c(1,5,3.14159)) %&gt;% knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">a</th>
+<th align="right">b</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">x</td>
+<td align="right">1.00000</td>
+</tr>
+<tr class="even">
+<td align="left">y</td>
+<td align="right">5.00000</td>
+</tr>
+<tr class="odd">
+<td align="left">z</td>
+<td align="right">3.14159</td>
+</tr>
+</tbody>
+</table>
+<p><em>Less</em> fortunately, this helpful function has its own problems: in particular, it usually sizes all tables to the width of the window rather than to the data<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>. For little two-column summary tables like the one above, this quickly starts to become a serious readability issue: your text and your numbers are so far apart that it’s easy to confuse two rows.</p>
+<p>here doesn’t seem to be any built-in way of fixing this, since <code>kable</code> is intended to be a quick-and-dirty practical tool rather than a full-fat solution.</p>
+<p>But wait, there are more options! The <code>flextable</code> package, a massively configurable replacement for <code>knitr::kable</code>, offers far more granular handling of table data. By default, it produces output something like:</p>
+<pre class="r"><code>data.frame(a=c(&quot;x&quot;,&quot;y&quot;,&quot;z&quot;), b=c(1,5,3.14159)) %&gt;% flextable()</code></pre>
+<div class="tabwid"><table style='border-collapse:collapse;width:108px;'><thead><tr style="overflow-wrap:break-word;"><td style="width:54px;background-color:transparent;vertical-align: middle;border-bottom: 2.00px solid rgba(0, 0, 0, 1.00);border-top: 2.00px solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;"><p style="margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:2px;padding-top:2px;padding-left:5px;padding-right:5px;background-color:transparent;"><span style="font-family:'Arial';font-size:11px;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(17, 17, 17, 1.00);background-color:transparent;">a</span></p></td><td style="width:54px;background-color:transparent;vertical-align: middle;border-bottom: 2.00px solid rgba(0, 0, 0, 1.00);border-top: 2.00px solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;"><p style="margin:0;text-align:right;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:2px;padding-top:2px;padding-left:5px;padding-right:5px;background-color:transparent;"><span style="font-family:'Arial';font-size:11px;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(17, 17, 17, 1.00);background-color:transparent;">b</span></p></td></tr></thead><tbody><tr style="overflow-wrap:break-word;"><td style="width:54px;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;"><p style="margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:2px;padding-top:2px;padding-left:5px;padding-right:5px;background-color:transparent;"><span style="font-family:'Arial';font-size:11px;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(17, 17, 17, 1.00);background-color:transparent;">x</span></p></td><td style="width:54px;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;"><p style="margin:0;text-align:right;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:2px;padding-top:2px;padding-left:5px;padding-right:5px;background-color:transparent;"><span style="font-family:'Arial';font-size:11px;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(17, 17, 17, 1.00);background-color:transparent;">1.00000</span></p></td></tr><tr style="overflow-wrap:break-word;"><td style="width:54px;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;"><p style="margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:2px;padding-top:2px;padding-left:5px;padding-right:5px;background-color:transparent;"><span style="font-family:'Arial';font-size:11px;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(17, 17, 17, 1.00);background-color:transparent;">y</span></p></td><td style="width:54px;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;"><p style="margin:0;text-align:right;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:2px;padding-top:2px;padding-left:5px;padding-right:5px;background-color:transparent;"><span style="font-family:'Arial';font-size:11px;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(17, 17, 17, 1.00);background-color:transparent;">5.00000</span></p></td></tr><tr style="overflow-wrap:break-word;"><td style="width:54px;background-color:transparent;vertical-align: middle;border-bottom: 2.00px solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;"><p style="margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:2px;padding-top:2px;padding-left:5px;padding-right:5px;background-color:transparent;"><span style="font-family:'Arial';font-size:11px;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(17, 17, 17, 1.00);background-color:transparent;">z</span></p></td><td style="width:54px;background-color:transparent;vertical-align: middle;border-bottom: 2.00px solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;"><p style="margin:0;text-align:right;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:2px;padding-top:2px;padding-left:5px;padding-right:5px;background-color:transparent;"><span style="font-family:'Arial';font-size:11px;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(17, 17, 17, 1.00);background-color:transparent;">3.14159</span></p></td></tr></tbody></table></div>
+<p>…which is also practically unreadable due to the tiny default font size. Why is it changing the font? I didn’t ask it to change the font!</p>
+<p>I’ve done the best part of an hour’s digging on this, and it appears that <code>flextable</code> will <em>always</em> override the notebook’s font settings; it isn’t possible to have it take the same font size and family used in the rest of the text, except by explicitly setting those parameters. This immediately creates a major maintenance burden: I need to know up-front every way in which this notebook could be used<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>, think through the appropriate font handling, and bake all of that into the code.</p>
+<p>Thanks but no thanks. Is there anything that’s closer to the behaviour of <code>kable</code>?</p>
+<p>Turns out there is. It’s called <code>kableExtra</code>, and it’s designed to let you build complex tables for HTML or LaTeX. Significantly, it has an autosize option!</p>
+<p>The result looks like:</p>
+<pre class="r"><code>data.frame(a=c(&quot;x&quot;,&quot;y&quot;,&quot;z&quot;), b=c(1,5,3.14159)) %&gt;% knitr::kable() %&gt;% kableExtra::kable_styling(full_width=FALSE)</code></pre>
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+a
+</th>
+<th style="text-align:right;">
+b
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+x
+</td>
+<td style="text-align:right;">
+1.00000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+y
+</td>
+<td style="text-align:right;">
+5.00000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+z
+</td>
+<td style="text-align:right;">
+3.14159
+</td>
+</tr>
+</tbody>
+</table>
+<p>Unfortunately, this has its own problems. Firstly, when I run this code in RStudio, I don’t get a table; I get a chunk of HTML. That’s kinda unhelpful.</p>
+<p><img src="/post/2020-05-16-tables-in-r-markdown_files/table_html.jpg" alt="Table being mis-displayed as raw HTML" /><br />
+Secondly, <code>kableExtra</code> is massively intrusive: it overrides the default <code>knitr</code> function behaviour to the point that formerly-valid code suddenly stops working.</p>
+<p>In particular, code of the form <code>df %&gt;% knitr::kable</code> will fall over with an unhelpful error message. I eventually realised that R was now expecting it to read <code>df %&gt;% knitr::kable()</code>. Because why? Because f*** you, <a href="https://knowyourmeme.com/memes/why-because-fuck-you-that-s-why">that’s why</a>.</p>
+<p>After some digging through the <code>kableExtra</code> <a href="https://github.com/haozhu233/kableExtra/issues/265">bug-tracker</a>, it appears that another hidden effect of this package is to change <code>knitr</code>’s default output to HTML. This is a more significant issue because - after yet <em>more</em> digging - I <em>finally</em> realised that <code>kable</code> is only intended for HTML and LaTeX output. Attempting to use it with Word output first produces an error and then, once you’ve applied a workaround, leaves you with completely unformatted output.</p>
+<p><img src="/post/2020-05-16-tables-in-r-markdown_files/table_word.jpg" alt="Word file with unformatted text instead of a table" /><br />
+Not much use…</p>
+</div>
+<div id="we-try-things-sometimes-they-work" class="section level2">
+<h2>We try things; sometimes they work</h2>
+<p>So here’s where I find myself:</p>
+<ol style="list-style-type: decimal">
+<li>I can produce functional tables with <code>knitr::kable</code>, but they have poor readability.</li>
+<li>I can produce tables with <code>flextable</code>, but they either have poor readability or are high-maintenance.</li>
+<li>I can produce attractive tables with <code>kableExtra</code>, but they can’t be used in Word and they screw up my system.</li>
+<li>I’ve wasted a lot of time to arrive at this conclusion.</li>
+</ol>
+<p>That last point is honestly the most annoying. If I were told up-front “no, you can’t do that in R”, I’d be… well, a little irritated, but nothing I couldn’t walk off.</p>
+<p>Conversely, after several hours of reading “sure you can do that, just try XYZ” - only to find out that my <em>specific</em> set of requirements falls squarely into the gaps between the available options - I’m fit to be tied. And this experience is ubiquitous when using R: every time you take one foot off the beaten track, you risk losing it to a bear-trap.</p>
+<p>Fundamentally this is a consequence of R’s very decentralised development philosophy: anyone can decide they’re unhappy with the current state of affairs and develop their own package, <a href="https://knowyourmeme.com/memes/im-going-to-build-my-own-theme-park-with-blackjack-and-hookers">with blackjack and hookers</a>. That sometimes leads to very good results (e.g. the tidyverse), but it means there isn’t a “right” way of doing things that the community as a whole takes responsibility for. Non-obvious use cases tend to fall through the cracks, with different packages’ developers all viewing them as someone else’s problem to solve.</p>
+<p>So ultimately you just have to suck it up. <sub>Or</sub> <sub>switch</sub> <sub>to</sub> <sub>Python.</sub></p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Interestingly, it appears this is <em>not</em> the case in Blogdown, where <code>knitr::kable</code> sizes tables to the width of the data. I discovered this factoid only after I had finished writing the post and published a first draft to GitHub Pages, and still have no idea why there’s a difference.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>To produce HTML, Word or PDF output; in a Blogdown post or Bookdown volume; as a child of another notebook; as an interactive educational tool; etc etc etc. Some of these will have the same font settings… but which? In particular, I’m not sure if font settings selected for HTML will display correctly in an MS Word document, or if this will cause the wheels to fall off.<a href="#fnref2">↩</a></p></li>
+</ol>
+</div>
