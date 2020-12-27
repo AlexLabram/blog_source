@@ -1,0 +1,122 @@
+---
+title: Credit Risk Modelling for Dummies
+author: Alex Labram
+date: '2020-06-08'
+slug: credit-risk-101
+draft: true
+categories:
+  - Credit Risk
+tags: []
+---
+
+```{r warning=FALSE, echo=FALSE, message=FALSE}
+reqd_pkgs <- c("knitr", # required for R Notebooks to function - if the notebook fails to compile, try running this code chunk in isolation
+               "tidyverse", # general language augmentation
+               "magrittr", # additional pipe operators
+               "here") # relative file paths
+for (pkg in reqd_pkgs[!(reqd_pkgs %in% installed.packages())])  install.packages(pkg)
+for (pkg in reqd_pkgs[!(reqd_pkgs %in% (.packages()))])         library(pkg, character.only = TRUE)
+```
+
+You've probably heard the [parable](https://en.wikipedia.org/wiki/Blind_men_and_an_elephant) of the blind men and the elephant.  The story goes: three blind men are led to an elephant and asked to describe it.
+
+"An elephant is thick and snake-like," says the first blind man, touching its trunk.  "An elephant is wide and flat," says the second blind man, touching its ear.  "An elephant is thin and rope-like," says the third blind man, touching its tail.
+
+Now, these days there is no way this little scientific experiment would make it past the departmental Ethics Committee.  But there is no doubting its power as a metaphor.  Very often we find that different commentators not only have different experiences of an object or system; they fail to realise that theirs is not the only experience to be had.
+
+Given the current global protests against governmental hate crimes, there's a wonderful post to be written there about privilege and prejudice.  Sadly I'm not the person to write it; I'd recommend you read some [Ta-Nehisi Coates](https://www.theatlantic.com/magazine/archive/2014/06/the-case-for-reparations/361631/) instead.  He's a better writer than me anyway.  Go on, I'll wait.
+
+...Finished?  Right.  Instead of trying to fill Mr Coates' shoes, I'm going to talk about credit risk modelling.
+
+## Surviving the stampede
+
+Credit risk is conceptually pretty straightforward.  Person A, the "obligor", is at risk of bankruptcy (or similar "credit event").  Person B, the "creditor", has somehow put themselves in the position of losing money if Person A falls over.  How much should Person B care about this risk?
+
+The specifics vary.  Person B may have lent Person A money, in the expectation of getting it back with interest in future.  They may have provided a guarantee to a third party that Person A will make some future payment[^1].  They may have bought some of Person A's publicly-traded debt[^2].  They may have sold a "credit derivative" that will pay out to a third party if Person A goes underwater.  The derivative may be against a mixture of debt from Person A1, A2, A3, etc.  But the underlying logic is the same.
+
+So why is it that I can read a dozen papers on "credit risk modelling", all describing their field in meticulous detail, but all apparently having their hands on a different elephant?
+
+## Grabbing the trunk
+
+After a considerable amount of reading, I've come to understand that there are a number of different worlds of credit risk specialists, with very little connection between them.
+
+Part of the reason for this lies in our reasons for calculating statistics relating to credit risk, and which statistics we're calculating.  As a few examples:
+
+* The old IAS 39 accounting standard, when applied to portfolios of loans and guarantees[^3], typically requires calculation of median expected losses based on a backward-looking analysis of historical credit performance.
+* The Basel II/III capital standard contains two approaches:
+    + The Standard Approach - a paint-by-numbers exercise applying set factors to risk exposures
+    + The Internal Ratings-Based approach, which requires banks to consider the 99% Value at Risk (the loss at the 99th percentile of the loss distribution)
+* The new IFRS 9 accounting standard, when applied to portfolios of loans and guarantees, typically requires calculation of expected losses based on a forward-looking analysis of plausible economic scenarios and their impact.
+* Banks' risk management frameworks often require the calculation of Value at Risk, Tail Value at Risk (the conditional tail expectation), or various other measures of "unexpected loss".
+* Valuation of derivatives often requires the calculation of a "credit/debit value adjustment" (CVA, DVA or - collectively - XVA).  These adjustments factor in the idiosyncratic risk of a specific counterparty defaulting, which may not be adequately captured by market prices.
+
+That's a lot of different motivations, each of which can give rise to different models.  But wait, there's more!
+
+##  Between the tusks
+
+Stepping back from this results-oriented picture, I've identified a number of distinctions, each of which gives rise to a different elephant.  These are:
+
+* Kernel vs non-kernel
+* $\mathbb{P}$ vs $\mathbb{Q}$
+* Structural vs reduced-form
+* Explained vs unexplained correlations
+* Retail vs commercial vs structured finance
+
+The first distinction, as is so often the case, is between those who focus on the "kernel" technical modelling elements versus the "non-kernel" elements: governance, data, documentation, usage and systems.  The non-kernel elements generally require less deep technical understanding, but are no less important for it.
+
+The second distinction is between the "$\mathbb{P}$" and "$\mathbb{Q}$" worlds of real-world and risk-neutral probability measures.  I've [discussed this](/2020/05/17/p-vs-q/) previously.  The two measures are used for slightly different purposes - valuation vs forecasting - and lend themselves to different mathematical treatments.
+
+Traditionally the $\mathbb{Q}$ world is more mathematically sophisticated, taking its lead from financial economics in calculating [credit/debit value adjustments](https://en.wikipedia.org/wiki/XVA) and valuing instruments like [credit default swaps](https://en.wikipedia.org/wiki/Credit_default_swap) and [collateralised debt obligations](https://en.wikipedia.org/wiki/Collateralized_debt_obligation).  Conversely, the $\mathbb{P}$ world tends to deal more closely with what we think of as traditional banking: business loans, mortgages, credit cards, etc.
+
+## The blind man
+
+The third distinction is between "structural" and "reduced-form" models.  This takes a bit more explanation.  Broadly speaking, both model types assume that there is some variable representing the credit-worthiness of the obligor, that this variable can change over time, and that there is a threshold below which the obligor may be said to have defaulted.  Let's call this variable X.
+
+Structural models assume that X is directly observable: for example, if we use a company's net worth as our estimate of X then we can check the accounts each year to see how they're doing, down to a default threshold of zero.  We can even look at individual components of the accounts - revenue, overheads, financing costs - and imagine how they might look in the future.
+
+In this world, the probability of default (or "ruin") is dictated by X's distance from zero and expected future trajectory.  Often we cann a simple model, like the Brownian random motion inspired by the movement of pollen grains buffeted by water molecules.  In this context, which was formalised as the celebrated Merton model of default, the loss distribution can be viewed as the pay-off of a European option: the "default put option".
+
+```{r echo=FALSE, fig.height=4, fig.width=4}
+ggplot() + 
+  geom_segment(aes(x=-10,y=10,xend=0,yend=0)) + 
+  geom_segment(aes(x=0,y=0,xend=10,yend=0)) +
+  coord_cartesian(xlim=c(-10,10),ylim=c(-10,10)) +
+  labs(title="Ultimate benefit to obligor of 'default put'",
+       x=bquote("Ultimate credit-worthiness ("~X[T]~")"), 
+       y="Benefit to obligor of defaulting")
+```
+
+Reduced-form models, on the other hand, assume that we're viewing the obligor's credit-worthiness through a burqa: only a small amount of information is available.  For example, if we use a company's credit rating as a proxy for its credit-worthiness, we could then investigate the rate at which companies tend to upgrade or downgrade, and hence the chance of hitting the pseudo-rating of "in default".
+
+It's worth noting that reduced-form models often justify their maths in terms of a hypothetical underlying structural model of default.  In fact, the various possible final ratings can be viewed as "bins" (cross-sectional chunks) of the continuous variable X.  The exact size of those bins can be determined based on actual rating transition data by making some fairly broad-brush assumptions, typically that X is normally distributed.
+
+```{r echo=FALSE, fig.height=3, fig.width=5}
+ggplot() + 
+  geom_segment(aes(x=-10,y=10,xend=0,yend=0)) + 
+  geom_segment(aes(x=0,y=0,xend=10,yend=0)) +
+  coord_cartesian(xlim=c(-10,10),ylim=c(-10,10)) +
+  labs(title="Bucketing of X into ratings",
+       x=bquote("Ultimate credit-worthiness ("~X[T]~")"), 
+       y="Probability of X")
+```
+
+
+The fourth distinction is more relevant to models that need to consider the full loss distribution: mean expected losses, standard deviation of losses, Value at Risk, Tail Value at Risk, etc etc.  This is the distinction between explained and unexplained correlation.  MOdels that focus on explained correlation work on the logic that 
+
+There is one final distinction, which in theory is relatively unimportant but in practice tends to give rise to significant cultural differences: whether the debt portfolio is "retail" (e.g. household mortgages), "commercial" (e.g. corporate bonds) or "structured finance" (e.g. bespoke derivatives).  Retail portfolios tend to have more homogeneous obligors than commercial portfolios, which enables the use of simpler mathematics.  Structured finance tends to have more complex contingent cashflows than either of the other two areas.
+
+
+
+
+A lot of the more sophisticated quantitative analysis is focused on the $\mathbb{Q}$ world.  For example, the original Heath-Jarrow-Morton model - one of the first "redu
+
+
+
+My personal experience has been mostly with the $\mathbb{P}$ world, though, so that's what the rest of this post will focus on.  Just be aware that 
+
+
+[^1]: I'm currently dealing with a credit institution that guarantees *other* institutions' guarantees of future payments.  Kinda.  Things can get a bit complicated, is what I'm saying.
+
+[^2]: Needless to say, at this point "Person A" is pretty much always a large corporation.
+
+[^3]: Per my "P vs Q" post, the real distinction is between assets and liabilities that are held to maturity, for which we don't need to worry about market movements unless they tell us something about the obligor's actual chance of defaulting, versus those that are intended to be traded on, for which we care more strongly about the current price.
